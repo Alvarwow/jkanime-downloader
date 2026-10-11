@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-jkanime_downloader.py - Descargador de animes completos de jkanime.net
+jkanime_downloader.py - Full anime series downloader for jkanime.net
 
-Requisitos:
+Requirements:
     pip install requests beautifulsoup4 yt-dlp
 
-Uso CLI:
+CLI usage:
     python3 jkanime_downloader.py naruto
     python3 jkanime_downloader.py naruto --ep-inicio 5 --ep-fin 10
     python3 jkanime_downloader.py naruto --servidor Streamtape
     python3 jkanime_downloader.py naruto --listar
 
-Uso GUI:
+GUI usage:
     python3 jkanime_gui.py
 
-El "slug" es la parte de la URL de jkanime.net después del dominio.
-Por ejemplo:  https://jkanime.net/naruto-shippuden/  →  naruto-shippuden
+The "slug" is the part of the jkanime.net URL after the domain.
+Example:  https://jkanime.net/naruto-shippuden/  →  naruto-shippuden
 """
 
 import argparse
@@ -32,7 +32,7 @@ try:
     import requests
     from bs4 import BeautifulSoup
 except ImportError:
-    print("ERROR: Faltan dependencias. Instala con: pip install requests beautifulsoup4")
+    print("ERROR: Missing dependencies. Install with: pip install requests beautifulsoup4")
     sys.exit(1)
 
 BASE_URL = "https://jkanime.net"
@@ -44,23 +44,22 @@ HEADERS = {
     "Referer": BASE_URL + "/",
 }
 
-# Servidores en orden de preferencia (Mediafire primero: descarga directa sin límites)
-SERVIDORES_PREFERIDOS = [
+# Servers in order of preference (Mediafire first: direct download, no speed limits)
+PREFERRED_SERVERS = [
     "Mediafire", "Mp4upload", "Streamwish", "Vidhide", "VOE",
     "Mixdrop", "Streamtape", "Doodstream",
 ]
 
 
-def _nombre_a_carpeta(nombre: str) -> str:
-    """Convierte el nombre del anime en un nombre válido para carpeta/archivo."""
-    # Eliminar caracteres prohibidos en sistemas de archivos
-    return re.sub(r'[\\/:*?"<>|]', '', nombre).strip()
+def _sanitize_name(name: str) -> str:
+    """Strip filesystem-illegal characters from an anime name."""
+    return re.sub(r'[\\/:*?"<>|]', '', name).strip()
 
 
-def _nombre_archivo_jellyfin(nombre_anime: str, numero_ep: int, ext: str = "%(ext)s") -> str:
-    """Genera el nombre de archivo en formato Jellyfin: 'Anime Name - S01E01.ext'"""
-    nombre_limpio = _nombre_a_carpeta(nombre_anime)
-    return f"{nombre_limpio} - S01E{numero_ep:02d}.{ext}"
+def _jellyfin_filename(anime_name: str, episode: int, ext: str = "%(ext)s") -> str:
+    """Build a Jellyfin-compatible filename: 'Anime Name - S01E01.ext'"""
+    clean = _sanitize_name(anime_name)
+    return f"{clean} - S01E{episode:02d}.{ext}"
 
 
 class JKAnimeDownloader:
@@ -74,7 +73,7 @@ class JKAnimeDownloader:
         self._cancelar = True
 
     def _obtener_csrf(self, url: str) -> str:
-        """Obtiene el token CSRF de una página."""
+        """Fetch the CSRF token from a page."""
         resp = self.session.get(url, timeout=30)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -84,9 +83,9 @@ class JKAnimeDownloader:
         return ""
 
     def obtener_info_anime(self, slug: str, log=print) -> dict:
-        """Obtiene el ID, nombre y episodios totales del anime."""
+        """Fetch the anime ID, title and total episode count."""
         url = f"{BASE_URL}/{slug}/"
-        log(f"Obteniendo información de: {url}")
+        log(f"Fetching anime info: {url}")
 
         self.csrf_token = self._obtener_csrf(url)
         resp = self.session.get(url, timeout=30)
@@ -96,7 +95,7 @@ class JKAnimeDownloader:
         # Extraer ID del anime desde los endpoints AJAX embebidos
         match = re.search(r'ajax/episodes/(\d+)', resp.text)
         if not match:
-            raise ValueError(f"No se pudo encontrar el ID del anime para '{slug}'")
+            raise ValueError(f"Could not find anime ID for '{slug}'")
         anime_id = match.group(1)
 
         # Extraer nombre del anime (el h3 dentro de .anime_info)
@@ -118,11 +117,11 @@ class JKAnimeDownloader:
         return {"id": anime_id, "nombre": nombre, "slug": slug, "total": total_ep}
 
     def listar_episodios(self, anime_id: str, log=print) -> list[dict]:
-        """Obtiene la lista completa de episodios paginando el API."""
+        """Fetch the full episode list by paginating the API."""
         episodios = []
         pagina = 1
 
-        log(f"Listando episodios del anime ID {anime_id}...")
+        log(f"Listing episodes for anime ID {anime_id}...")
 
         while True:
             url_pag = f"{BASE_URL}/ajax/episodes/{anime_id}/{pagina}"
@@ -150,15 +149,15 @@ class JKAnimeDownloader:
             pagina += 1
             time.sleep(0.5)
 
-        log(f"Total de episodios encontrados: {len(episodios)}")
+        log(f"Total episodes found: {len(episodios)}")
         return episodios
 
-    def obtener_servidores(self, slug: str, numero_ep: int) -> list[dict]:
+    def obtener_servidores(self, slug: str, episode_num: int) -> list[dict]:
         """
         Obtiene la lista de servidores de un episodio.
         Retorna lista de dicts con: server, url_embed, size, lang
         """
-        url = f"{BASE_URL}/{slug}/{numero_ep}/"
+        url = f"{BASE_URL}/{slug}/{episode_num}/"
         resp = self.session.get(url, timeout=30)
         resp.raise_for_status()
 
@@ -180,7 +179,7 @@ class JKAnimeDownloader:
                 url_embed = s.get("remote", "")
 
             servidores.append({
-                "server": s.get("server", "Desconocido"),
+                "server": s.get("server", "Unknown"),
                 "url": url_embed,
                 "size": s.get("size", "?"),
                 "lang": s.get("lang", 1),  # 1=sub, 2=dub
@@ -190,7 +189,7 @@ class JKAnimeDownloader:
         return servidores
 
     def _elegir_servidor(self, servidores: list[dict], servidor_pref: str | None, log=print) -> dict | None:
-        """Selecciona el mejor servidor disponible."""
+        """Pick the best available server."""
         if not servidores:
             return None
 
@@ -201,9 +200,9 @@ class JKAnimeDownloader:
             for s in candidatos:
                 if s["server"].lower() == servidor_pref.lower():
                     return s
-            log(f"Servidor '{servidor_pref}' no disponible para este episodio.")
+            log(f"Server '{servidor_pref}' not available for this episode.")
 
-        for nombre_pref in SERVIDORES_PREFERIDOS:
+        for nombre_pref in PREFERRED_SERVERS:
             for s in candidatos:
                 if s["server"].lower() == nombre_pref.lower():
                     return s
@@ -212,24 +211,24 @@ class JKAnimeDownloader:
 
     def descargar_mediafire(self, url_mf: str, archivo_salida: str,
                              log=print, on_progress=None) -> bool:
-        """Extrae el enlace directo de Mediafire y lo descarga."""
-        log(f"Extrayendo enlace de Mediafire...")
+        """Extract the direct download link from Mediafire and download it."""
+        log(f"Extracting Mediafire direct link...")
         try:
             resp = self.session.get(url_mf, timeout=20)
             resp.raise_for_status()
             match = re.search(r'href="(https://download\d+\.mediafire\.com/[^"]+\.(?:mp4|mkv|avi))"', resp.text)
             if not match:
-                log("  No se encontró enlace directo en Mediafire.")
+                log("  Could not find a direct download link on Mediafire.")
                 return False
             url_directa = match.group(1)
-            log(f"  Enlace directo: {url_directa[:80]}...")
+            log(f"  Direct link: {url_directa[:80]}...")
             return self.descargar_directo(url_directa, archivo_salida, log, on_progress)
         except Exception as e:
-            log(f"  Error con Mediafire: {e}")
+            log(f"  Mediafire error: {e}")
             return False
 
     def descargar_con_ytdlp(self, url_video: str, archivo_salida: str, log=print) -> bool:
-        """Usa yt-dlp para descargar el video."""
+        """Download a video using yt-dlp."""
         # Buscar yt-dlp: primero en PATH, luego en ~/.local/bin
         ytdlp_path = None
         for candidato in ["yt-dlp", os.path.expanduser("~/.local/bin/yt-dlp")]:
@@ -241,13 +240,13 @@ class JKAnimeDownloader:
                 continue
 
         if not ytdlp_path:
-            log("yt-dlp no encontrado. Instálalo: pacman -S yt-dlp  o  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp")
+            log("yt-dlp not found. Install: pacman -S yt-dlp  or  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp")
             return False
 
         cmd = [
             ytdlp_path,
             "--no-warnings",
-            "--newline",          # una línea por actualización de progreso
+            "--newline",          # one line per progress update
             "-o", archivo_salida,
             "--retries", "5",
             "--fragment-retries", "10",
@@ -255,7 +254,7 @@ class JKAnimeDownloader:
             url_video,
         ]
 
-        log(f"Descargando con yt-dlp: {url_video[:80]}...")
+        log(f"Downloading with yt-dlp: {url_video[:80]}...")
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -273,16 +272,16 @@ class JKAnimeDownloader:
                     return False
             proc.wait()
             if proc.returncode != 0:
-                log(f"yt-dlp terminó con código {proc.returncode}")
+                log(f"yt-dlp exited with code {proc.returncode}")
             return proc.returncode == 0
         except Exception as e:
-            log(f"Error ejecutando yt-dlp: {e}")
+            log(f"Error running yt-dlp: {e}")
             return False
 
     def descargar_directo(self, url_video: str, archivo_salida: str,
                           log=print, on_progress=None) -> bool:
-        """Descarga directamente con requests + callback de progreso."""
-        log(f"Descarga directa: {url_video[:80]}...")
+        """Download directly with requests, reporting progress via callback."""
+        log(f"Direct download: {url_video[:80]}...")
         try:
             with self.session.get(url_video, stream=True, timeout=60) as r:
                 r.raise_for_status()
@@ -299,30 +298,30 @@ class JKAnimeDownloader:
                                 on_progress(descargado, total)
             return True
         except Exception as e:
-            log(f"Error de descarga directa: {e}")
+            log(f"Direct download error: {e}")
             return False
 
     def descargar_episodio(
         self,
         slug: str,
-        numero_ep: int,
+        episode_num: int,
         carpeta: str,
-        nombre_anime: str = "",      # nombre real para el formato Jellyfin
+        anime_name: str = "",      # nombre real para el formato Jellyfin
         servidor_pref: str | None = None,
         log=print,
         on_progress=None,
     ) -> bool:
-        """Descarga un episodio concreto probando todos los servidores hasta que uno funcione."""
-        archivo_destino = os.path.join(carpeta, _nombre_archivo_jellyfin(nombre_anime or slug, numero_ep, "%(ext)s"))
-        archivo_mp4    = os.path.join(carpeta, _nombre_archivo_jellyfin(nombre_anime or slug, numero_ep, "mp4"))
+        """Download a single episode, trying every server until one succeeds."""
+        archivo_destino = os.path.join(carpeta, _jellyfin_filename(anime_name or slug, episode_num, "%(ext)s"))
+        archivo_mp4    = os.path.join(carpeta, _jellyfin_filename(anime_name or slug, episode_num, "mp4"))
 
         if os.path.exists(archivo_mp4):
-            log(f"Episodio {numero_ep} ya descargado, saltando.")
+            log(f"Episode {episode_num} already downloaded, skipping.")
             return True
 
-        servidores = self.obtener_servidores(slug, numero_ep)
+        servidores = self.obtener_servidores(slug, episode_num)
         if not servidores:
-            log(f"No se encontraron servidores para el episodio {numero_ep}")
+            log(f"No servers found for episode {episode_num}")
             return False
 
         # Construir lista ordenada: servidor preferido primero, luego el resto por preferencia
@@ -331,7 +330,7 @@ class JKAnimeDownloader:
         if servidor_pref:
             primero = [s for s in subs if s["server"].lower() == servidor_pref.lower()]
             candidatos.extend(primero)
-        for nombre_pref in SERVIDORES_PREFERIDOS:
+        for nombre_pref in PREFERRED_SERVERS:
             for s in subs:
                 if s["server"].lower() == nombre_pref.lower() and s not in candidatos:
                     candidatos.append(s)
@@ -342,22 +341,22 @@ class JKAnimeDownloader:
         for servidor in candidatos:
             if self._cancelar:
                 return False
-            log(f"Probando servidor: {servidor['server']} ({servidor['size']})")
+            log(f"Trying server: {servidor['server']} ({servidor['size']})")
 
-            # Mediafire: extracción de enlace directo (no usa yt-dlp)
+            # Mediafire: extract direct link (no yt-dlp needed)
             if servidor["server"].lower() == "mediafire":
                 ok = self.descargar_mediafire(servidor["url"], archivo_mp4, log, on_progress)
             else:
                 ok = self.descargar_con_ytdlp(servidor["url"], archivo_destino, log)
                 if not ok:
-                    log("  yt-dlp falló, probando descarga directa...")
+                    log("  yt-dlp failed, trying direct download...")
                     ok = self.descargar_directo(servidor["url"], archivo_mp4, log, on_progress)
 
             if ok:
                 return True
-            log(f"  Servidor {servidor['server']} falló, probando siguiente...")
+            log(f"  Server {servidor['server']} failed, trying next...")
 
-        log(f"Todos los servidores fallaron para el episodio {numero_ep}.")
+        log(f"All servers failed for episode {episode_num}.")
         return False
 
     def descargar_anime(
@@ -373,14 +372,14 @@ class JKAnimeDownloader:
         on_episode_done=None,    # callback(numero, exito)
         on_progress=None,        # callback(bytes_descargados, bytes_total)
     ):
-        """Punto de entrada principal: descarga todo un anime."""
+        """Main entry point: download a full anime series."""
         self._cancelar = False
         info = self.obtener_info_anime(slug, log)
         log(f"Anime: {info['nombre']} (ID: {info['id']})")
 
         episodios = self.listar_episodios(info["id"], log)
         if not episodios:
-            log("No se encontraron episodios.")
+            log("No episodes found.")
             return info, []
 
         ep_fin_real = ep_fin or episodios[-1]["number"]
@@ -392,23 +391,23 @@ class JKAnimeDownloader:
             return info, episodios_filtrados
 
         if not episodios_filtrados:
-            log(f"No hay episodios en el rango {ep_inicio}-{ep_fin_real}.")
+            log(f"No episodes in range {ep_inicio}–{ep_fin_real}.")
             return info, []
 
-        carpeta = os.path.join(carpeta_raiz, _nombre_a_carpeta(info["nombre"]))
+        carpeta = os.path.join(carpeta_raiz, _sanitize_name(info["nombre"]))
         os.makedirs(carpeta, exist_ok=True)
-        log(f"Carpeta de destino: {os.path.abspath(carpeta)}")
-        log(f"Descargando {len(episodios_filtrados)} episodios (del {ep_inicio} al {ep_fin_real})")
+        log(f"Output folder: {os.path.abspath(carpeta)}")
+        log(f"Downloading {len(episodios_filtrados)} episodes ({ep_inicio} to {ep_fin_real})")
 
         exitos = 0
         fallos = []
 
         for i, ep in enumerate(episodios_filtrados):
             if self._cancelar:
-                log("Descarga cancelada.")
+                log("Download cancelled.")
                 break
 
-            log(f"\n── Episodio {ep['number']}/{ep_fin_real}: {ep['title']}")
+            log(f"\n── Episode {ep['number']}/{ep_fin_real}: {ep['title']}")
             if on_episode_start:
                 on_episode_start(i + 1, len(episodios_filtrados), ep["title"])
 
@@ -425,35 +424,35 @@ class JKAnimeDownloader:
 
             time.sleep(1)
 
-        log(f"\n── Descarga completada: {exitos}/{len(episodios_filtrados)} episodios")
+        log(f"\n── Download complete: {exitos}/{len(episodios_filtrados)} episodes")
         if fallos:
-            log(f"Episodios fallidos: {fallos}")
+            log(f"Failed episodes: {fallos}")
 
         return info, episodios_filtrados
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Descargador de animes de jkanime.net",
+        description="Download anime series from jkanime.net",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos:
   %(prog)s naruto
   %(prog)s naruto-shippuden --ep-inicio 1 --ep-fin 50
-  %(prog)s one-piece --servidor Streamtape --carpeta ~/Videos/Anime
+  %(prog)s one-piece --servidor Streamtape --carpeta ~/Videos
   %(prog)s attack-on-titan --listar
         """,
     )
-    parser.add_argument("slug", help="Nombre del anime en la URL (ej: naruto, one-piece)")
-    parser.add_argument("--ep-inicio", type=int, default=1, help="Episodio inicial (default: 1)")
-    parser.add_argument("--ep-fin", type=int, default=None, help="Episodio final (default: último)")
+    parser.add_argument("slug", help="Anime slug from the URL (e.g. naruto, one-piece)")
+    parser.add_argument("--ep-inicio", type=int, default=1, help="First episode (default: 1)")
+    parser.add_argument("--ep-fin", type=int, default=None, help="Last episode (default: last)")
     parser.add_argument(
         "--servidor",
         default=None,
-        help=f"Servidor preferido. Opciones: {', '.join(SERVIDORES_PREFERIDOS)}",
+        help=f"Preferred server. Options: {', '.join(PREFERRED_SERVERS)}",
     )
-    parser.add_argument("--carpeta", default=".", help="Carpeta de descarga (default: directorio actual)")
-    parser.add_argument("--listar", action="store_true", help="Solo listar episodios sin descargar")
+    parser.add_argument("--carpeta", default=".", help="Download folder (default: current dir)")
+    parser.add_argument("--listar", action="store_true", help="List episodes only, no download")
 
     args = parser.parse_args()
 
@@ -472,11 +471,11 @@ Ejemplos:
             log=log,
         )
         if args.listar:
-            print(f"\nEpisodios de {info['nombre']}:")
+            print(f"\nEpisodes of {info['nombre']}:")
             for ep in eps:
                 print(f"  Ep {ep['number']:4d} | {ep['title']}")
     except KeyboardInterrupt:
-        print("\n[!] Descarga interrumpida por el usuario.")
+        print("\n[!] Download interrupted by user.")
     except Exception as e:
         print(f"\n[!] Error: {e}")
         sys.exit(1)

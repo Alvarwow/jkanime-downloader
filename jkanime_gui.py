@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-jkanime_gui.py - Interfaz gráfica para jkanime_downloader
+jkanime_gui.py - Graphical interface for jkanime_downloader
 Requisitos: pip install PyQt6 requests beautifulsoup4 yt-dlp
 Uso:       python3 jkanime_gui.py
 """
@@ -20,9 +20,9 @@ from PyQt6.QtWidgets import (
 )
 
 try:
-    from jkanime_downloader import JKAnimeDownloader, SERVIDORES_PREFERIDOS
+    from jkanime_downloader import JKAnimeDownloader, PREFERRED_SERVERS
 except ImportError:
-    print("ERROR: No se encontró jkanime_downloader.py en el mismo directorio.")
+    print("ERROR: jkanime_downloader.py not found in the same directory.")
     sys.exit(1)
 
 
@@ -145,7 +145,7 @@ QPushButton:disabled {{
     border-color: {COLOR_PANEL};
 }}
 
-/* ── Botón primario (dorado) ── */
+/* ── Primary button (gold) ── */
 QPushButton#btn_primary {{
     background-color: {COLOR_ACCENT2};
     border: none;
@@ -168,7 +168,7 @@ QPushButton#btn_primary:disabled {{
     border: none;
 }}
 
-/* ── Botón cancelar ── */
+/* ── Cancel button ── */
 QPushButton#btn_cancel {{
     background-color: transparent;
     border: 1px solid #3a3a3a;
@@ -185,7 +185,7 @@ QPushButton#btn_cancel:disabled {{
     color: #333;
 }}
 
-/* ── Botón carpeta ── */
+/* ── Folder button ── */
 QPushButton#btn_folder {{
     background-color: {COLOR_CARD};
     padding: 8px 12px;
@@ -383,9 +383,9 @@ class MainWindow(QMainWindow):
         self.resize(1100, 750)
         self.setStyleSheet(STYLESHEET)
         self._build_ui()
-        self._status("Listo.")
+        self._status("Ready.")
 
-    # ── Construcción de la UI ─────────────────────────────────────────────────
+    # ── UI construction ─────────────────────────────────────────────────
     def _build_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
     def _build_header(self):
         lay = QHBoxLayout()
 
-        # Línea de acento dorada izquierda
+        # Left gold accent line
         accent_line = QFrame()
         accent_line.setFixedWidth(3)
         accent_line.setFixedHeight(36)
@@ -422,7 +422,7 @@ class MainWindow(QMainWindow):
 
         lbl_title = QLabel("JKAnime Downloader")
         lbl_title.setObjectName("title")
-        lbl_sub = QLabel("Descarga animes completos de jkanime.net")
+        lbl_sub = QLabel("Download complete anime series from jkanime.net")
         lbl_sub.setObjectName("subtitle")
 
         vlbl = QVBoxLayout()
@@ -440,17 +440,17 @@ class MainWindow(QMainWindow):
         return lay
 
     def _build_search_bar(self):
-        grp = QGroupBox("Anime")
+        grp = QGroupBox("Anime URL")
         lay = QHBoxLayout(grp)
         lay.setSpacing(8)
 
         self.inp_slug = QLineEdit()
         self.inp_slug.setPlaceholderText(
-            "Pega la URL del anime  —  ej: https://jkanime.net/cyberpunk-edgerunners/"
+            "Paste the anime URL  —  e.g. https://jkanime.net/cyberpunk-edgerunners/"
         )
         self.inp_slug.returnPressed.connect(self._buscar)
 
-        self.btn_buscar = QPushButton("🔍  Buscar episodios")
+        self.btn_buscar = QPushButton("🔍  Search episodes")
         self.btn_buscar.setFixedWidth(180)
         self.btn_buscar.clicked.connect(self._buscar)
 
@@ -471,18 +471,18 @@ class MainWindow(QMainWindow):
 
         # Rango de episodios
         rng_lay = QHBoxLayout()
-        rng_lay.addWidget(QLabel("Desde ep:"))
+        rng_lay.addWidget(QLabel("From ep:"))
         self.spin_inicio = QSpinBox()
         self.spin_inicio.setRange(1, 9999)
         self.spin_inicio.setValue(1)
         self.spin_inicio.setFixedWidth(70)
         rng_lay.addWidget(self.spin_inicio)
         rng_lay.addSpacing(10)
-        rng_lay.addWidget(QLabel("Hasta ep:"))
+        rng_lay.addWidget(QLabel("To ep:"))
         self.spin_fin = QSpinBox()
         self.spin_fin.setRange(0, 9999)
         self.spin_fin.setValue(0)
-        self.spin_fin.setSpecialValueText("Último")
+        self.spin_fin.setSpecialValueText("Last")
         self.spin_fin.setFixedWidth(70)
         rng_lay.addWidget(self.spin_fin)
         rng_lay.addStretch()
@@ -490,39 +490,39 @@ class MainWindow(QMainWindow):
 
         # Servidor
         srv_lay = QHBoxLayout()
-        srv_lay.addWidget(QLabel("Servidor:"))
+        srv_lay.addWidget(QLabel("Server:"))
         self.combo_servidor = QComboBox()
-        self.combo_servidor.addItem("Auto (Mediafire primero)")
-        for s in SERVIDORES_PREFERIDOS:
+        self.combo_servidor.addItem("Auto (Mediafire first)")
+        for s in PREFERRED_SERVERS:
             self.combo_servidor.addItem(s)
         srv_lay.addWidget(self.combo_servidor, 1)
         form.addLayout(srv_lay)
 
         # Carpeta
         folder_lay = QHBoxLayout()
-        folder_lay.addWidget(QLabel("Carpeta:"))
-        self.inp_carpeta = QLineEdit(os.path.expanduser("~/Descargas"))
+        folder_lay.addWidget(QLabel("Folder:"))
+        self.inp_carpeta = QLineEdit(os.path.expanduser("~/Downloads"))
         folder_lay.addWidget(self.inp_carpeta, 1)
         btn_folder = QPushButton("📁")
         btn_folder.setObjectName("btn_folder")
-        btn_folder.setToolTip("Elegir carpeta…")
+        btn_folder.setToolTip("Choose folder…")
         btn_folder.clicked.connect(self._elegir_carpeta)
         folder_lay.addWidget(btn_folder)
         form.addLayout(folder_lay)
 
         lay.addWidget(grp_opts)
 
-        # ── Botones de acción ──
-        grp_acc = QGroupBox("Acciones")
+        # ── Action buttons ──
+        grp_acc = QGroupBox("Actions")
         acc_lay = QVBoxLayout(grp_acc)
         acc_lay.setSpacing(8)
 
-        self.btn_descargar = QPushButton("⬇  Descargar")
+        self.btn_descargar = QPushButton("⬇  Download")
         self.btn_descargar.setObjectName("btn_primary")
         self.btn_descargar.setEnabled(False)
         self.btn_descargar.clicked.connect(self._iniciar_descarga)
 
-        self.btn_cancelar = QPushButton("✖  Cancelar")
+        self.btn_cancelar = QPushButton("✖  Cancel")
         self.btn_cancelar.setObjectName("btn_cancel")
         self.btn_cancelar.setEnabled(False)
         self.btn_cancelar.clicked.connect(self._cancelar_descarga)
@@ -532,7 +532,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(grp_acc)
 
         # ── Progreso ──
-        grp_prog = QGroupBox("Progreso")
+        grp_prog = QGroupBox("Progress")
         prog_lay = QVBoxLayout(grp_prog)
         prog_lay.setSpacing(6)
 
@@ -543,11 +543,11 @@ class MainWindow(QMainWindow):
         )
 
         self.bar_episodios = QProgressBar()
-        self.bar_episodios.setFormat("%v / %m episodios")
+        self.bar_episodios.setFormat("%v / %m episodes")
         self.bar_episodios.setValue(0)
 
         self.bar_bytes = QProgressBar()
-        self.bar_bytes.setFormat("Descarga directa: %p%")
+        self.bar_bytes.setFormat("Direct download: %p%")
         self.bar_bytes.setValue(0)
         self.bar_bytes.setVisible(False)
 
@@ -566,17 +566,17 @@ class MainWindow(QMainWindow):
         lay.setSpacing(12)
 
         # ── Tabla de episodios ──
-        grp_eps = QGroupBox("Episodios")
+        grp_eps = QGroupBox("Episodes")
         eps_lay = QVBoxLayout(grp_eps)
 
-        self.lbl_anime_nombre = QLabel("Ningún anime cargado")
+        self.lbl_anime_nombre = QLabel("No anime loaded")
         self.lbl_anime_nombre.setStyleSheet(
             f"color: {COLOR_DIM}; font-size: 14px; font-weight: 600; padding: 2px 0; letter-spacing: 0.3px;"
         )
         eps_lay.addWidget(self.lbl_anime_nombre)
 
         self.tabla = QTableWidget(0, 3)
-        self.tabla.setHorizontalHeaderLabels(["Ep.", "Título", "Estado"])
+        self.tabla.setHorizontalHeaderLabels(["Ep.", "Title", "Status"])
         self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
@@ -594,14 +594,14 @@ class MainWindow(QMainWindow):
         lay.addWidget(grp_eps, 1)
 
         # ── Log ──
-        grp_log = QGroupBox("Registro")
+        grp_log = QGroupBox("Log")
         log_lay = QVBoxLayout(grp_log)
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setMaximumHeight(180)
         log_lay.addWidget(self.log_text)
 
-        btn_clear = QPushButton("Limpiar log")
+        btn_clear = QPushButton("Clear log")
         btn_clear.setFixedWidth(110)
         btn_clear.clicked.connect(self.log_text.clear)
         log_lay.addWidget(btn_clear, alignment=Qt.AlignmentFlag.AlignRight)
@@ -614,7 +614,7 @@ class MainWindow(QMainWindow):
         frame.setFixedHeight(28)
         lay = QHBoxLayout(frame)
         lay.setContentsMargins(0, 0, 0, 0)
-        self.lbl_estado = QLabel("Listo")
+        self.lbl_estado = QLabel("Ready")
         self.lbl_estado.setStyleSheet(f"color: {COLOR_SUBTEXT}; font-size: 11px; letter-spacing: 0.3px;")
         lay.addWidget(self.lbl_estado)
         lay.addStretch()
@@ -623,7 +623,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(lbl_credits)
         return frame
 
-    # ── Lógica ────────────────────────────────────────────────────────────────
+    # ── Logic ────────────────────────────────────────────────────────────────
     def _status(self, msg: str):
         self.lbl_estado.setText(msg)
         self.statusBar().showMessage(msg)
@@ -636,7 +636,7 @@ class MainWindow(QMainWindow):
 
     def _elegir_carpeta(self):
         carpeta = QFileDialog.getExistingDirectory(
-            self, "Seleccionar carpeta de descarga",
+            self, "Select download folder",
             self.inp_carpeta.text() or os.path.expanduser("~"),
         )
         if carpeta:
@@ -657,15 +657,15 @@ class MainWindow(QMainWindow):
     def _buscar(self):
         slug = self._slug_from_input(self.inp_slug.text())
         if not slug:
-            self._log("⚠ Pega la URL del anime.")
+            self._log("⚠ Paste the anime URL.")
             return
 
         self.btn_buscar.setEnabled(False)
         self.btn_descargar.setEnabled(False)
         self.tabla.setRowCount(0)
         self.episodios = []
-        self._log(f"Buscando: {slug} …")
-        self._status("Buscando episodios…")
+        self._log(f"Searching: {slug} …")
+        self._status("Searching episodes…")
 
         self.downloader = JKAnimeDownloader()
         worker = BuscarWorker(self.downloader, slug)
@@ -684,7 +684,7 @@ class MainWindow(QMainWindow):
         self.lbl_anime_nombre.setStyleSheet(
             f"color: {COLOR_TEXT}; font-size: 14px; font-weight: 600; padding: 2px 0; letter-spacing: 0.3px;"
         )
-        self._status(f"{nombre} — {len(episodios)} episodios cargados.")
+        self._status(f"{nombre} — {len(episodios)} episodes loaded.")
         self._log(f"<span style='color:{COLOR_SUCCESS}'>✓ {len(episodios)} episodios encontrados.</span>")
 
         self.tabla.setRowCount(len(episodios))
@@ -694,7 +694,7 @@ class MainWindow(QMainWindow):
             self.tabla.setItem(i, 2, self._cell("–", center=True))
         self.tabla.resizeRowsToContents()
 
-        # Actualizar spin con el máximo real
+        # Update spin with actual max
         total = episodios[-1]["number"] if episodios else 1
         self.spin_inicio.setRange(1, total)
         self.spin_fin.setRange(0, total)
@@ -705,7 +705,7 @@ class MainWindow(QMainWindow):
 
     def _on_error_busqueda(self, msg: str):
         self._log(f"<span style='color:{COLOR_ERROR}'>✖ Error: {msg}</span>")
-        self._status("Error al buscar.")
+        self._status("Search error.")
 
     def _iniciar_descarga(self):
         if not self.episodios:
@@ -723,8 +723,8 @@ class MainWindow(QMainWindow):
         self.bar_episodios.setValue(0)
         self.bar_bytes.setVisible(False)
         self._log(f"\n▶ Iniciando descarga de <b style='color:{COLOR_ACCENT2}'>{self.info_anime.get('nombre', slug)}</b> "
-                  f"ep {inicio}–{fin or 'último'} (servidor: {servidor})")
-        self._status("Descargando…")
+                  f"ep {inicio}–{fin or 'last'} (server: {servidor})")
+        self._status("Downloading…")
 
         # Resetear estados en tabla
         for i in range(self.tabla.rowCount()):
@@ -747,14 +747,14 @@ class MainWindow(QMainWindow):
     def _cancelar_descarga(self):
         if self._worker and self.downloader:
             self.downloader.cancelar()
-            self._log(f"<span style='color:{COLOR_ACCENT2}'>⏹ Cancelando…</span>")
-            self._status("Cancelando…")
+            self._log(f"<span style='color:{COLOR_ACCENT2}'>⏹ Cancelling…</span>")
+            self._status("Cancelling…")
             self.btn_cancelar.setEnabled(False)
 
     def _on_episodio_inicio(self, actual: int, total: int, titulo: str):
         self.bar_episodios.setMaximum(total)
         self.bar_episodios.setValue(actual - 1)
-        self.lbl_ep_actual.setText(f"Descargando: {titulo}")
+        self.lbl_ep_actual.setText(f"Downloading: {titulo}")
         self._status(f"Ep {actual}/{total}: {titulo}")
         self.bar_bytes.setValue(0)
         self.bar_bytes.setVisible(False)
@@ -765,7 +765,7 @@ class MainWindow(QMainWindow):
         for i in range(self.tabla.rowCount()):
             item = self.tabla.item(i, 0)
             if item and item.text() == str(numero_ep):
-                estado = self._cell("✓ OK" if exito else "✖ Error", center=True)
+                estado = self._cell("✓ OK" if exito else "✖ Failed", center=True)
                 estado.setForeground(
                     QColor(COLOR_SUCCESS) if exito else QColor(COLOR_ERROR)
                 )
@@ -779,19 +779,19 @@ class MainWindow(QMainWindow):
         self.bar_bytes.setValue(descargado)
         mb_d = descargado / 1024 / 1024
         mb_t = total / 1024 / 1024
-        self.bar_bytes.setFormat(f"Descarga directa: {mb_d:.1f} / {mb_t:.1f} MB  (%p%)")
+        self.bar_bytes.setFormat(f"Direct download: {mb_d:.1f} / {mb_t:.1f} MB  (%p%)")
 
     def _on_descarga_finalizada(self):
         self.btn_descargar.setEnabled(True)
         self.btn_cancelar.setEnabled(False)
         self.btn_buscar.setEnabled(True)
-        self.lbl_ep_actual.setText("Descarga finalizada.")
-        self._status("Descarga finalizada.")
+        self.lbl_ep_actual.setText("Download complete.")
+        self._status("Download complete.")
         self._log(f"<span style='color:{COLOR_SUCCESS}'>✓ Proceso completado.</span>")
 
     def _on_error_descarga(self, msg: str):
         self._log(f"<span style='color:{COLOR_ERROR}'>✖ {msg}</span>")
-        self._status("Error durante la descarga.")
+        self._status("Download error.")
         self.btn_descargar.setEnabled(True)
         self.btn_cancelar.setEnabled(False)
         self.btn_buscar.setEnabled(True)
