@@ -8,6 +8,7 @@
 [![PyQt6](https://img.shields.io/badge/PyQt6-GUI-c8a96e?style=flat-square&logo=qt&logoColor=white&labelColor=0a0a0a)](https://pypi.org/project/PyQt6/)
 [![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-white?style=flat-square&logo=youtube&logoColor=white&labelColor=0a0a0a)](https://github.com/yt-dlp/yt-dlp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=flat-square&labelColor=0a0a0a)](LICENSE)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=flat-square&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/YOUR_KOFI_USERNAME)
 
 </div>
 
@@ -178,6 +179,20 @@ jkanime.net/{slug}/{number}/  →  extract server list (base64-encoded in JS)
     ├─ Mediafire  →  scrape direct download link  →  stream with requests
     └─ Others     →  yt-dlp resolves stream URL   →  download with yt-dlp
 ```
+
+---
+
+## ✦ Support the project
+
+JKAnime Downloader is free and open source. If it saves you time or you just find it useful, consider buying me a coffee — it helps keep the project maintained and motivates adding new features.
+
+<div align="center">
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/YOUR_KOFI_USERNAME)
+
+</div>
+
+> No pressure at all — a GitHub ⭐ star on the repo is already a great way to show support.
 
 ---
 
