@@ -51,6 +51,18 @@ SERVIDORES_PREFERIDOS = [
 ]
 
 
+def _nombre_a_carpeta(nombre: str) -> str:
+    """Convierte el nombre del anime en un nombre válido para carpeta/archivo."""
+    # Eliminar caracteres prohibidos en sistemas de archivos
+    return re.sub(r'[\\/:*?"<>|]', '', nombre).strip()
+
+
+def _nombre_archivo_jellyfin(nombre_anime: str, numero_ep: int, ext: str = "%(ext)s") -> str:
+    """Genera el nombre de archivo en formato Jellyfin: 'Anime Name - S01E01.ext'"""
+    nombre_limpio = _nombre_a_carpeta(nombre_anime)
+    return f"{nombre_limpio} - S01E{numero_ep:02d}.{ext}"
+
+
 class JKAnimeDownloader:
     def __init__(self):
         self.session = requests.Session()
@@ -295,13 +307,14 @@ class JKAnimeDownloader:
         slug: str,
         numero_ep: int,
         carpeta: str,
+        nombre_anime: str = "",      # nombre real para el formato Jellyfin
         servidor_pref: str | None = None,
         log=print,
         on_progress=None,
     ) -> bool:
         """Descarga un episodio concreto probando todos los servidores hasta que uno funcione."""
-        archivo_destino = os.path.join(carpeta, f"{slug}_ep{numero_ep:04d}.%(ext)s")
-        archivo_mp4 = os.path.join(carpeta, f"{slug}_ep{numero_ep:04d}.mp4")
+        archivo_destino = os.path.join(carpeta, _nombre_archivo_jellyfin(nombre_anime or slug, numero_ep, "%(ext)s"))
+        archivo_mp4    = os.path.join(carpeta, _nombre_archivo_jellyfin(nombre_anime or slug, numero_ep, "mp4"))
 
         if os.path.exists(archivo_mp4):
             log(f"Episodio {numero_ep} ya descargado, saltando.")
@@ -382,7 +395,7 @@ class JKAnimeDownloader:
             log(f"No hay episodios en el rango {ep_inicio}-{ep_fin_real}.")
             return info, []
 
-        carpeta = os.path.join(carpeta_raiz, slug)
+        carpeta = os.path.join(carpeta_raiz, _nombre_a_carpeta(info["nombre"]))
         os.makedirs(carpeta, exist_ok=True)
         log(f"Carpeta de destino: {os.path.abspath(carpeta)}")
         log(f"Descargando {len(episodios_filtrados)} episodios (del {ep_inicio} al {ep_fin_real})")
@@ -400,7 +413,7 @@ class JKAnimeDownloader:
                 on_episode_start(i + 1, len(episodios_filtrados), ep["title"])
 
             ok = self.descargar_episodio(
-                slug, ep["number"], carpeta, servidor, log, on_progress
+                slug, ep["number"], carpeta, info["nombre"], servidor, log, on_progress
             )
             if ok:
                 exitos += 1
