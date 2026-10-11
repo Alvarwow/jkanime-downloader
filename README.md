@@ -9,7 +9,7 @@
 [![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-white?style=flat-square&logo=youtube&logoColor=white&labelColor=0a0a0a)](https://github.com/yt-dlp/yt-dlp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=flat-square&labelColor=0a0a0a)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=flat-square&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
+
 
 </div>
 
