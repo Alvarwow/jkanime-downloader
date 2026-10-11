@@ -9,11 +9,26 @@
 [![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-white?style=flat-square&logo=youtube&logoColor=white&labelColor=0a0a0a)](https://github.com/yt-dlp/yt-dlp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=flat-square&labelColor=0a0a0a)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=flat-square&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
 
 </div>
 
 ---
+---
 
+## ✦ Support the project
+
+JKAnime Downloader is free and open source. If it saves you time or you just find it useful, consider buying me a coffee — it helps keep the project maintained and motivates adding new features.
+
+<div align="center">
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
+
+</div>
+
+> No pressure at all — a GitHub ⭐ star on the repo is already a great way to show support.
+
+---
 ## ✦ Features
 
 - **Premium dark GUI** built with PyQt6
@@ -29,7 +44,7 @@
 
 ## ✦ Installation
 
-### One-line install (recommended)
+### Linux / macOS — one command
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/jkanime-downloader.git
@@ -37,37 +52,55 @@ cd jkanime-downloader
 bash install.sh
 ```
 
-The installer will:
-- Check Python 3.10+ is available
-- Install `ffmpeg` if missing (supports apt, pacman, dnf, brew)
-- Create an isolated virtual environment (`.venv/`)
-- Install all Python dependencies inside it
-- Generate ready-to-run launcher scripts
-
-After installation, just run:
+Then run:
 
 ```bash
 ./jkanime-gui        # graphical interface
 ./jkanime --help     # command-line interface
 ```
 
-### Manual install
+### Windows — one command
+
+```powershell
+git clone https://github.com/YOUR_USERNAME/jkanime-downloader.git
+cd jkanime-downloader
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+Then run:
+
+```bat
+jkanime-gui.bat
+jkanime.bat naruto --listar
+```
+
+> **Requires Python 3.10+** from [python.org](https://python.org) (check *"Add to PATH"* during install).
+> `ffmpeg` and `yt-dlp` are installed automatically via `winget` if not present.
+
+### What the installer does (both platforms)
+
+| Step | Linux / macOS | Windows |
+|---|---|---|
+| Check Python 3.10+ | ✓ | ✓ |
+| Install ffmpeg | apt / pacman / dnf / brew | winget |
+| Install yt-dlp | pacman / curl | winget |
+| Create isolated `.venv/` | ✓ | ✓ |
+| Install Python deps | pip | pip |
+| Generate launchers | `./jkanime`, `./jkanime-gui` | `jkanime.bat`, `jkanime-gui.bat` |
+
+### Manual install (any platform)
 
 ```bash
 python3 -m venv .venv
+
+# Linux / macOS
 source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+
 pip install -r requirements.txt
 ```
-
-> **ffmpeg** must also be installed on your system:
-> ```bash
-> # Arch Linux
-> sudo pacman -S ffmpeg
-> # Ubuntu / Debian
-> sudo apt install ffmpeg
-> # macOS
-> brew install ffmpeg
-> ```
 
 ---
 
@@ -154,7 +187,8 @@ Files are named for **Jellyfin / Plex / Emby** compatibility:
 jkanime-downloader/
 ├── jkanime_downloader.py   # Core engine — scraping, downloading, CLI
 ├── jkanime_gui.py          # PyQt6 graphical interface
-├── install.sh              # Automated installer
+├── install.sh              # Automated installer (Linux / macOS)
+├── install.ps1             # Automated installer (Windows)
 ├── requirements.txt        # Python dependencies
 ├── LICENSE
 └── README.md
@@ -180,21 +214,7 @@ jkanime.net/{slug}/{number}/  →  extract server list (base64-encoded in JS)
     └─ Others     →  yt-dlp resolves stream URL   →  download with yt-dlp
 ```
 
----
 
-## ✦ Support the project
-
-JKAnime Downloader is free and open source. If it saves you time or you just find it useful, consider buying me a coffee — it helps keep the project maintained and motivates adding new features.
-
-<div align="center">
-
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-c8a96e?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=0a0a0a)](https://ko-fi.com/alvarwow)
-
-</div>
-
-> No pressure at all — a GitHub ⭐ star on the repo is already a great way to show support.
-
----
 
 ## ✦ Legal notice
 

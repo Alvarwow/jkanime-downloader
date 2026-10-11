@@ -229,18 +229,39 @@ class JKAnimeDownloader:
 
     def descargar_con_ytdlp(self, url_video: str, archivo_salida: str, log=print) -> bool:
         """Download a video using yt-dlp."""
-        # Buscar yt-dlp: primero en PATH, luego en ~/.local/bin
+        import sys as _sys
+        # Search yt-dlp in PATH and common install locations across platforms
+        is_win = _sys.platform == "win32"
+        candidates = ["yt-dlp"]
+        if is_win:
+            candidates += [
+                os.path.expanduser(r"~\AppData\Local\Programs\Python\Python3*\Scripts\yt-dlp.exe"),
+                os.path.expanduser(r"~\AppData\Roaming\Python\Scripts\yt-dlp.exe"),
+                os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Links", "yt-dlp.exe"),
+            ]
+        else:
+            candidates += [
+                os.path.expanduser("~/.local/bin/yt-dlp"),
+                "/usr/local/bin/yt-dlp",
+            ]
+
         ytdlp_path = None
-        for candidato in ["yt-dlp", os.path.expanduser("~/.local/bin/yt-dlp")]:
+        for candidate in candidates:
             try:
-                subprocess.run([candidato, "--version"], capture_output=True, check=True)
-                ytdlp_path = candidato
+                subprocess.run([candidate, "--version"], capture_output=True, check=True)
+                ytdlp_path = candidate
                 break
-            except (FileNotFoundError, subprocess.CalledProcessError):
+            except (FileNotFoundError, subprocess.CalledProcessError, OSError):
                 continue
 
         if not ytdlp_path:
-            log("yt-dlp not found. Install: pacman -S yt-dlp  or  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp")
+            if is_win:
+                log("yt-dlp not found. Install via winget:  winget install yt-dlp  "
+                    "or download from https://github.com/yt-dlp/yt-dlp/releases")
+            else:
+                log("yt-dlp not found. Install: pacman -S yt-dlp  or  "
+                    "curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp "
+                    "-o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp")
             return False
 
         cmd = [
