@@ -2,7 +2,7 @@
 
 # ⬛ JKAnime Downloader
 
-**Descarga animes completos de [jkanime.net](https://jkanime.net) con interfaz gráfica o desde la terminal.**
+**Download complete anime series from [jkanime.net](https://jkanime.net) — GUI or CLI.**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-white?style=flat-square&logo=python&logoColor=white&labelColor=0a0a0a)](https://python.org)
 [![PyQt6](https://img.shields.io/badge/PyQt6-GUI-c8a96e?style=flat-square&logo=qt&logoColor=white&labelColor=0a0a0a)](https://pypi.org/project/PyQt6/)
@@ -13,100 +13,116 @@
 
 ---
 
-## ✦ Características
+## ✦ Features
 
-- **Interfaz gráfica** oscura y premium construida con PyQt6
-- **Descarga animes completos** o rangos de episodios específicos
-- **Multiples servidores** — prueba automáticamente todos hasta encontrar uno que funcione
-- **Prioridad Mediafire** — descarga directa sin limitaciones de velocidad
-- **yt-dlp integrado** para servidores de streaming (Mp4upload, VOE, Streamtape…)
-- **Reanudación** — los episodios ya descargados se saltan automáticamente
-- **CLI disponible** para uso sin interfaz gráfica
+- **Premium dark GUI** built with PyQt6
+- **Download full series** or specific episode ranges
+- **Automatic server fallback** — tries every available server until one works
+- **Mediafire first** — direct download, no speed limits
+- **yt-dlp integration** for streaming servers (Mp4upload, VOE, Streamtape…)
+- **Resume support** — already downloaded episodes are skipped automatically
+- **Jellyfin-ready filenames** — `Anime Name - S01E01.mp4`
+- **CLI available** for scripting and headless use
 
 ---
 
-## ✦ Instalación
+## ✦ Installation
 
-### Requisitos previos
-
-- Python 3.10 o superior
-- `ffmpeg` instalado en el sistema
+### One-line install (recommended)
 
 ```bash
-# Arch Linux
-sudo pacman -S ffmpeg yt-dlp
-
-# Ubuntu / Debian
-sudo apt install ffmpeg
-pip install yt-dlp
+git clone https://github.com/YOUR_USERNAME/jkanime-downloader.git
+cd jkanime-downloader
+bash install.sh
 ```
 
-### Dependencias Python
+The installer will:
+- Check Python 3.10+ is available
+- Install `ffmpeg` if missing (supports apt, pacman, dnf, brew)
+- Create an isolated virtual environment (`.venv/`)
+- Install all Python dependencies inside it
+- Generate ready-to-run launcher scripts
+
+After installation, just run:
 
 ```bash
+./jkanime-gui        # graphical interface
+./jkanime --help     # command-line interface
+```
+
+### Manual install
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> Si tu sistema no tiene `pip`, descarga `yt-dlp` manualmente:
+> **ffmpeg** must also be installed on your system:
 > ```bash
-> curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
->   -o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp
+> # Arch Linux
+> sudo pacman -S ffmpeg
+> # Ubuntu / Debian
+> sudo apt install ffmpeg
+> # macOS
+> brew install ffmpeg
 > ```
 
 ---
 
-## ✦ Uso
+## ✦ Usage
 
-### Interfaz gráfica
-
-```bash
-python3 jkanime_gui.py
-```
-
-1. Pega la URL del anime (ej: `https://jkanime.net/cyberpunk-edgerunners/`)
-2. Pulsa **Buscar episodios**
-3. Configura el rango y la carpeta de destino
-4. Pulsa **Descargar**
-
-### Línea de comandos
+### GUI
 
 ```bash
-# Descargar anime completo
-python3 jkanime_downloader.py naruto
-
-# Descargar rango de episodios
-python3 jkanime_downloader.py naruto-shippuden --ep-inicio 1 --ep-fin 50
-
-# Elegir servidor específico
-python3 jkanime_downloader.py one-piece --servidor Mediafire
-
-# Guardar en carpeta específica
-python3 jkanime_downloader.py attack-on-titan --carpeta ~/Videos/Anime
-
-# Solo listar episodios disponibles
-python3 jkanime_downloader.py cyberpunk-edgerunners --listar
+./jkanime-gui
+# or: python3 jkanime_gui.py
 ```
 
-#### Opciones CLI
+1. Paste the anime URL (e.g. `https://jkanime.net/cyberpunk-edgerunners/`)
+2. Click **Search episodes**
+3. Set the episode range and destination folder
+4. Click **Download**
 
-| Argumento | Descripción | Valor por defecto |
+### CLI
+
+```bash
+# Download a full series
+./jkanime naruto
+
+# Download a specific range
+./jkanime naruto-shippuden --ep-start 1 --ep-end 50
+
+# Choose a specific server
+./jkanime one-piece --server Mediafire
+
+# Save to a custom folder
+./jkanime attack-on-titan --folder ~/Videos/Anime
+
+# List available episodes without downloading
+./jkanime cyberpunk-edgerunners --list
+```
+
+#### CLI options
+
+| Argument | Description | Default |
 |---|---|---|
-| `slug` | Nombre del anime en la URL | — |
-| `--ep-inicio` | Episodio desde el que empezar | `1` |
-| `--ep-fin` | Episodio hasta el que descargar | último |
-| `--servidor` | Servidor preferido | Auto (Mediafire primero) |
-| `--carpeta` | Carpeta de destino | directorio actual |
-| `--listar` | Solo listar, sin descargar | — |
+| `slug` | Anime name from the URL | — |
+| `--ep-inicio` | First episode to download | `1` |
+| `--ep-fin` | Last episode to download | last |
+| `--servidor` | Preferred server | Auto (Mediafire first) |
+| `--carpeta` | Destination folder | current directory |
+| `--listar` | List episodes only, no download | — |
 
 ---
 
-## ✦ Servidores soportados
+## ✦ Supported servers
 
-El descargador prueba los servidores en este orden hasta que uno funcione:
+Servers are tried in this order until one succeeds:
 
-| # | Servidor | Método |
-|---|---|---|
-| 1 | **Mediafire** | Descarga directa (extracción de enlace) |
+| Priority | Server | Method |
+|:---:|---|---|
+| 1 | **Mediafire** | Direct link extraction |
 | 2 | **Mp4upload** | yt-dlp |
 | 3 | **Streamwish** | yt-dlp |
 | 4 | **Vidhide** | yt-dlp |
@@ -117,45 +133,61 @@ El descargador prueba los servidores en este orden hasta que uno funcione:
 
 ---
 
-## ✦ Estructura del proyecto
+## ✦ Output format
+
+Files are named for **Jellyfin / Plex / Emby** compatibility:
+
+```
+~/Videos/Anime/
+└── Cyberpunk Edgerunners/
+    ├── Cyberpunk Edgerunners - S01E01.mp4
+    ├── Cyberpunk Edgerunners - S01E02.mp4
+    └── ...
+```
+
+---
+
+## ✦ Project structure
 
 ```
 jkanime-downloader/
-├── jkanime_downloader.py   # Núcleo: scraping + descarga (usable como CLI o librería)
-├── jkanime_gui.py          # Interfaz gráfica PyQt6
-├── requirements.txt
+├── jkanime_downloader.py   # Core engine — scraping, downloading, CLI
+├── jkanime_gui.py          # PyQt6 graphical interface
+├── install.sh              # Automated installer
+├── requirements.txt        # Python dependencies
 ├── LICENSE
 └── README.md
 ```
 
 ---
 
-## ✦ Cómo funciona
+## ✦ How it works
 
 ```
-URL del anime
-     │
-     ▼
-jkanime.net/{slug}/          →  extrae ID interno del anime
-     │
-     ▼
-/ajax/episodes/{id}/{página}  →  lista paginada de episodios (JSON)
-     │
-     ▼
-jkanime.net/{slug}/{numero}/  →  extrae lista de servidores (base64 en JS)
-     │
-     ├─ Mediafire  →  scraping del enlace directo  →  descarga con requests
-     └─ Otros      →  yt-dlp extrae URL de stream  →  descarga con yt-dlp
+Anime URL
+    │
+    ▼
+jkanime.net/{slug}/           →  extract internal anime ID
+    │
+    ▼
+/ajax/episodes/{id}/{page}    →  paginated episode list (JSON)
+    │
+    ▼
+jkanime.net/{slug}/{number}/  →  extract server list (base64-encoded in JS)
+    │
+    ├─ Mediafire  →  scrape direct download link  →  stream with requests
+    └─ Others     →  yt-dlp resolves stream URL   →  download with yt-dlp
 ```
 
 ---
 
-## ✦ Aviso legal
+## ✦ Legal notice
 
-Este proyecto es solo para uso educativo y personal. Respeta los derechos de autor y las condiciones de uso de [jkanime.net](https://jkanime.net). No almacenes ni distribuyas el contenido descargado.
+This project is for personal and educational use only. Respect the copyright and terms of service of [jkanime.net](https://jkanime.net). Do not redistribute downloaded content.
 
 ---
 
 <div align="center">
-<sub>Hecho con Python · PyQt6 · yt-dlp</sub>
+<sub>Built with Python · PyQt6 · yt-dlp</sub>
 </div>
+
